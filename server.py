@@ -3,16 +3,41 @@ import select
 import _thread
 import sys
 
-def listning_client(srv_sock,client_list):
+# listing client end resend data
+def listning_client(srv_sock,client_list, privat=False):
     while True:
         read_sockets, write_sockets, error_sockets = select.select(client_list, [], [])
 
         for sock in read_sockets:
 
+            # add new client in chat
             if sock == srv_sock:
                 clnt_sock, addr = srv_sock.accept()
-                client_list.append(clnt_sock)
-                print("Client {} connected".format(str(addr)))
+
+                # check id client for privet chat
+                if privat:
+                    list_id = []
+                    # get list of Client's ID
+                    try:
+                        with open(file_client) as file:
+                            for line in file:
+                                list_id.append(int(line.rstrip('\n')))
+                    except IOError as er:
+                        print('Can\'t open the "clients.txt" file Error: {}'.format(er))
+
+                    id = clnt_sock.recv(4096)
+                    if int(id.decode()) in list_id:
+                        # ID was found => open connection
+                        clnt_sock.send("open".encode())
+                        client_list.append(clnt_sock)
+                    else:
+                        # ID wasn't found => close connection
+                        clnt_sock.send("close".encode())
+                        clnt_sock.close()
+                        continue
+                else:
+                    # chat is public => open connection
+                    client_list.append(clnt_sock)
             else:
                 try:
                     data = sock.recv(4096)
@@ -20,8 +45,6 @@ def listning_client(srv_sock,client_list):
                     print("Client {} lost".format(str(addr)))
                     sock.close()
                     client_list.remove(sock)
-                    if len(client_list) == 1:
-                        break
                     continue
                 if data:
                     if data == "exit()":
@@ -29,6 +52,7 @@ def listning_client(srv_sock,client_list):
                         sock.close()
                         client_list.remove(sock)
                     else:
+                        # send data to all clients excluding recover & srv
                         for socket in client_list:
                             if socket != srv_sock and socket != sock:
                                 socket.send(data)
@@ -40,11 +64,13 @@ def check_list_privat():
               "Action:")
         action = sys.stdin.readline()
 
+        # Exit ()
         if (int(action)) is 0:
             print ("Exit()")
             _thread.interrupt_main()
             break
 
+        # print all Client's ID
         elif (int(action)) is 1:
             try:
                 print("Client:")
@@ -55,12 +81,14 @@ def check_list_privat():
             except IOError as er:
                 print('Can\'t open the "clients.txt" file Error: {}'.format(er))
 
+        # Add new Client ID in list of clients
         elif (int(action)) is 2:
             print("Enter new ID client:")
             new_ID = sys.stdin.readline()
             with open(file_client, 'a') as file:
                 file.write(new_ID)
 
+        # Delete new Client ID in list of clients
         elif (int(action)) is 3:
             try:
                 print("Enter ID client to delete:")
@@ -82,11 +110,13 @@ if __name__ == "__main__":
     client_list_prv = []
     file_client = sys.argv[1]
 
+    # create socket for public chat
     srv_sock_pub = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv_sock_pub.bind(("127.0.0.1", 9090))
     srv_sock_pub.listen(100)
     client_list_pub.append(srv_sock_pub)
 
+    # create socket for privet chat
     srv_sock_prv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv_sock_prv.bind(("127.0.0.1", 9091))
     srv_sock_prv.listen(100)
@@ -98,7 +128,7 @@ if __name__ == "__main__":
 
     _thread.start_new_thread(check_list_privat, ())
     _thread.start_new_thread(listning_client, (srv_sock_pub, client_list_pub))
-    _thread.start_new_thread(listning_client, (srv_sock_prv, client_list_prv))
+    _thread.start_new_thread(listning_client, (srv_sock_prv, client_list_prv, True))
 
     try:
         while True:

@@ -7,7 +7,6 @@ def send_msg():
         print("Enter message:  ")
         msg = sys.stdin.readline()
         if "exit()" in msg:
-            sock.send(msg)
             _thread.interrupt_main()
             break
         else:
@@ -41,39 +40,33 @@ if __name__ == "__main__":
     if type_chat is 1:
         authorization = False
         client_list = []
-        Port = 9091
 
         while not authorization:
             print("Enter your ID for privet chat {0 - exit}:  ")
             client = sys.stdin.readline()
-            try:
-                with open(sys.argv[1]) as file:
-                    for line in file:
-                        client_list.append(int(line.rstrip('\n')))
-            except IOError as er:
-                print('Can\'t open the "clients.txt" file Error: {}'.format(er))
-            if int(client) in client_list:
+
+            sock = socket.socket()
+            sock.connect(("127.0.0.1", 9091))
+            sock.send(client.encode())
+            data = sock.recv(4096)
+            if data.decode() == "open":
                 authorization = True
-            else:
-                print("You enter invalid ID. Please, enter new ID:  ")
 
         name = client.rstrip()
 
     elif type_chat is 2:
         print("Enter your name for public chat or your ID for privet chat:  ")
         client = sys.stdin.readline()
-        Port = 9090
         while len(client) <= 1:
             print("You enter invalid name. Please, enter new name:  ")
             client = str(sys.stdin.readline())
 
         name = client.rstrip()
+        sock = socket.socket()
+        sock.connect(("127.0.0.1", 9090))
 
     elif type_chat is 0:
         sys.exit()
-
-    sock = socket.socket()
-    sock.connect(("127.0.0.1", Port))
 
     print("{}, Welcome to the Chat!".format(name))
     print("Connection to chat-server.")
