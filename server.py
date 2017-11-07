@@ -5,22 +5,11 @@ import sys
 
 
 if __name__ == "__main__":
-
-    count_client = int(sys.argv[1])
-    if len(sys.argv) < 1:
-        print('Error: not the correct number of parameters. '
-              'Restart script: python server [number of client]')
-        sys.exit(1)
-
-    # The number of clients must be positive
-    if count_client < 0:
-        print('Error: the number of client don\'t correct')
-        sys.exit(1)
-
+    
     client_list = []
     srv_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv_sock.bind(("127.0.0.1", 9090))
-    srv_sock.listen(count_client)
+    srv_sock.listen(100)
     client_list.append(srv_sock)
 
     print("Chat server if running...IP = 127.0.0.1:9090")
