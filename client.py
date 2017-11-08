@@ -37,6 +37,7 @@ if __name__ == "__main__":
         print("Invalid param.Enter type of chat {1 - privet chat, 2 - public chat, 0 - exit}:")
         type_chat = int(sys.stdin.readline())
 
+    # for opening privet chat, user must enter his ID.
     if type_chat is 1:
         authorization = False
         client_list = []
@@ -51,6 +52,8 @@ if __name__ == "__main__":
             data = sock.recv(4096)
             if data.decode() == "open":
                 authorization = True
+            else:
+                print ("Inbalid ID.")
 
         name = client.rstrip()
 
@@ -80,4 +83,5 @@ if __name__ == "__main__":
         while True:
             continue
     except:
+        _thread.exit()
         sock.close()
