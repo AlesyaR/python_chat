@@ -85,8 +85,14 @@ def check_list_privat():
         elif (int(action)) is 2:
             print("Enter new ID client:")
             new_ID = sys.stdin.readline()
-            with open(file_client, 'a') as file:
-                file.write(new_ID)
+            with open(file_client) as file:
+                    clients = file.readlines()
+            if str(new_ID) in clients:
+                print ("The client with this ID was exist.")
+            else:
+                with open(file_client, 'a') as file:
+                    file.write(new_ID)
+                print ("The client with this ID was added.")
 
         # Delete new Client ID in list of clients
         elif (int(action)) is 3:
@@ -95,10 +101,15 @@ def check_list_privat():
                 delete_ID = sys.stdin.readline()
                 with open(file_client) as file:
                     clients = file.readlines()  # lines to keep
-                with open(file_client, 'w') as file:
-                    for id in clients:
-                        if int(id) != int(delete_ID):
-                            file.writelines(str(id))
+                
+                if str(delete_ID) in clients:
+                    with open(file_client, 'w') as file:
+                        for id in clients:
+                            if int(id) != int(delete_ID):
+                                file.writelines(str(id))
+                    print ("The client with this ID was deleted.")
+                else:
+                    print ("The client with this ID wasn't exist.")
 
             except IOError as er:
                 print('Can\'t open the "clients.txt" file. Error: {}'.format(er))
@@ -108,7 +119,11 @@ if __name__ == "__main__":
 
     client_list_pub = []
     client_list_prv = []
-    file_client = sys.argv[1]
+    try:
+        file_client = sys.argv[1]
+    except:
+        print ("The file with cliemts'e id wasn't found. Please, restart script with file.")
+        sys.exit()
 
     # create socket for public chat
     srv_sock_pub = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -134,6 +149,7 @@ if __name__ == "__main__":
         while True:
             continue
     except:
+        _thread.exit()
         srv_sock_prv.close()
         srv_sock_pub.close()
 
